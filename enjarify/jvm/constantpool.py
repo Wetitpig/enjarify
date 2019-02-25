@@ -101,8 +101,12 @@ class ConstantPoolBase:
         stream.u8(tag)
 
         if tag == CONSTANT_Utf8:
-            stream.u16(len(val))
-            stream.write(val)
+            if val is None:
+                stream.u16(0)
+                print('tag=', tag,', item=', item,', NoneTypeError: val = None!')
+            else:
+                stream.u16(len(val))
+                stream.write(val)
         elif tag in (CONSTANT_Integer, CONSTANT_Float):
             stream.u32(val)
         elif tag in (CONSTANT_Long, CONSTANT_Double):
