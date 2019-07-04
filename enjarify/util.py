@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from ctypes import *
+
 def keysToRanges(d, limit):
     starts = sorted(d)
     for s, e in zip(starts, starts[1:] + [limit]):
@@ -19,10 +21,10 @@ def keysToRanges(d, limit):
             d[k] = d[s]
     return d
 
-def signExtend(val, size):
-    if val & (1 << (size-1)):
-        val -= (1 << size)
-    return val
+btio = CDLL("enjarify/lib/byte_util.so")
+signExtend = btio.signExtend
+signExtend.argtypes = [c_uint64, c_size_t]
+signExtend.restype = c_int64
 
 def s16(val):
     val %= 1 << 16

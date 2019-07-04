@@ -254,8 +254,8 @@ class DexFile:
     def stream(self, offset): return Reader(self.raw, offset)
 
     def string(self, i):
-        data_off = self.stream(self.string_ids.off + i*4).u32()
-        stream = self.stream(data_off)
+        stream = self.stream(self.string_ids.off + i*4)
+        stream.pos = stream.u32()
         stream.uleb128() # ignore decoded length
         return stream.readCStr()
 

@@ -31,10 +31,10 @@ def visitLinearCode(irdata, visitor):
 
         if instr in irdata.jump_targets or isinstance(instr, (ir.LazyJumpBase, ir.Switch)):
             visitor.visitJumpTargetOrBranch(instr)
-        elif not instr.fallsthrough():
-            visitor.visitReturn()
-        else:
+        elif instr.fallsthrough():
             visitor.visit(instr)
+        else:
+            visitor.visitReturn()
     assert except_level == 0
     return visitor
 

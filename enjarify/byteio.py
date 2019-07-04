@@ -13,31 +13,36 @@
 # limitations under the License.
 
 import struct
+from ctypes import *
 
 from .util import signExtend
 
+btio = CDLL("enjarify/lib/byte_util.so")
+
 class Reader:
+
+    btio.ru16.argtypes = [POINTER(c_char)]
+    btio.ru32.argtypes = [POINTER(c_char)]
+    btio.ru64.argtypes = [POINTER(c_char)]
+
     def __init__(self, data, pos=0):
         self.data = data
         self.pos = pos
 
     def read(self, size):
-        if not 0 <= size <= len(self.data) - self.pos:
+        end = self.pos + size
+        if end > len(self.data):
             raise IndexError
-        result = self.data[self.pos: self.pos+size]
-        self.pos += size
+        result = self.data[self.pos:end]
+        self.pos = end
         return result
 
-    def _unpack(self, fmt):
-        fmt = struct.Struct(fmt)
-        return fmt.unpack_from(self.read(fmt.size))[0]
-
     def u8(self): return self.read(1)[0]
-    def u16(self): return self._unpack('<H')
-    def u32(self): return self._unpack('<I')
-    def u64(self): return self._unpack('<Q')
+    def u16(self): return btio.ru16(self.read(2));
+    def u32(self): return btio.ru32(self.read(4));
+    def u64(self): return btio.ru64(self.read(8));
 
-    def _leb128(self, signed=False):
+    def uleb128(self, signed=False):
         result = 0
         size = 0
         while self.data[self.pos] >> 7:
@@ -52,8 +57,7 @@ class Reader:
             result = signExtend(result, size)
         return result
 
-    def uleb128(self): return self._leb128()
-    def sleb128(self): return self._leb128(signed=True)
+    def sleb128(self): return self.uleb128(signed=True)
 
     # Maintain strings in binary encoding instead of attempting to decode them
     # since the output will be using the same encoding anyway
